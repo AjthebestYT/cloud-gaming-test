@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ADAN BYPASS | Cloud Gaming</title>
   
-  <!-- Essential Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios@0.26.0/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.2/dist/sweetalert2.all.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.2/dist/sweetalert2.min.css" rel="stylesheet">
 
@@ -18,9 +16,7 @@
     body { background: #000; margin: 0; overflow: hidden; color: white; font-family: sans-serif; }
     [v-cloak] { display: none; }
     
-    .layout-wrapper { display: flex; width: 100vw; height: 100vh; background: var(--bg-main); position: fixed; }
-    
-    /* 1. CLOSABLE SIDEBAR CSS */
+    /* 1. CLOSABLE SIDEBAR */
     .sidebar-left { 
       width: 380px; 
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -35,40 +31,41 @@
     
     .main-right { flex: 1; background: #19191a; position: relative; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* 2. HORIZONTAL GAME LIST CSS */
-    .game-list-container { width: 100%; padding: 2rem; overflow-x: auto; white-space: nowrap; }
+    /* 2. HORIZONTAL SCROLLING GAME LIST */
+    .game-list-container { width: 100%; padding: 2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .game-list-horizontal { display: flex; flex-direction: row; gap: 1.5rem; padding-bottom: 1rem; }
     .game-card { 
-      flex: 0 0 240px; 
+      flex: 0 0 280px; 
       background: rgba(255,255,255,0.03); 
-      border-radius: 20px; 
+      border-radius: 24px; 
       overflow: hidden; 
       cursor: pointer; 
       transition: 0.3s;
       border: 1px solid rgba(255,255,255,0.05);
     }
     .game-card:hover { transform: translateY(-10px); border-color: var(--primary); background: rgba(139, 92, 246, 0.1); }
-    .game-card img { width: 100%; height: 135px; object-fit: cover; }
+    .game-card img { width: 100%; height: 160px; object-fit: cover; }
     
     .rotate { transform: rotate(90deg); transform-origin: center; width: 100vh !important; height: 100vw !important; }
     video, canvas { width: 100%; height: 100%; position: absolute; }
 
-    .toggle-btn { position: absolute; top: 20px; left: 20px; z-index: 100; background: var(--primary); padding: 10px; border-radius: 12px; cursor: pointer; }
+    .toggle-btn { position: absolute; top: 20px; left: 20px; z-index: 100; background: var(--primary); padding: 10px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body>
   <div id="app" v-cloak>
-    <!-- Toggle Button for Closable Sidebar -->
+    <!-- Sidebar Toggle -->
     <div class="toggle-btn" @click="isSidebarOpen = !isSidebarOpen">
       <i :data-lucide="isSidebarOpen ? 'chevron-left' : 'menu'" class="text-white w-6 h-6"></i>
     </div>
 
-    <div class="layout-wrapper">
+    <div class="layout-wrapper flex">
       <!-- SIDEBAR (CLOSABLE) -->
       <div class="sidebar-left" :class="{'sidebar-closed': !isSidebarOpen}">
         <div class="p-8 border-b border-white/5 pt-20">
           <div class="flex items-center justify-between">
-            <div class="font-black text-2xl tracking-tighter">
+            <div class="font-black text-2xl tracking-tighter italic">
               <span class="text-white">ADAN</span><span class="text-[#8b5cf6]"> BYPASS</span>
             </div>
             <button v-if="!token" @click="showLoginModal = true" class="px-4 py-2 bg-[#8b5cf6] rounded-xl text-xs font-bold">Sign In</button>
@@ -76,62 +73,70 @@
           </div>
         </div>
         
-        <!-- Game Details in Sidebar when selected -->
+        <!-- Sidebar Content: Selected Game Info -->
         <div v-if="selectedGame" class="p-8 flex flex-col h-full overflow-y-auto">
-           <button @click="selectedGame = null" class="mb-4 text-gray-500 flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
-           <img :src="selectedGame.icon" class="w-full aspect-video object-cover rounded-2xl mb-6">
-           <h2 class="text-3xl font-black mb-4">{{selectedGame.title}}</h2>
-           <p class="text-sm text-gray-400 mb-8">Ready to stream on ADAN Bypass Cloud.</p>
-           <button @click="startGame" class="w-full py-4 bg-[#8b5cf6] rounded-2xl font-black text-lg">START SESSION</button>
+           <button @click="selectedGame = null" class="mb-6 text-gray-500 flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+           <img :src="selectedGame.icon" class="w-full aspect-video object-cover rounded-3xl mb-6 shadow-2xl border border-white/10">
+           <h2 class="text-4xl font-black mb-2">{{selectedGame.title}}</h2>
+           <div class="text-[#8b5cf6] font-bold text-xs uppercase mb-6 tracking-widest">{{selectedGame.category}}</div>
+           <p class="text-sm text-gray-400 mb-10 leading-relaxed">Stream {{selectedGame.title}} instantly on ADAN BYPASS high-performance cloud servers. No lag, no downloads.</p>
+           <button @click="startGame" class="w-full py-5 bg-[#8b5cf6] rounded-3xl font-black text-xl shadow-xl shadow-purple-500/20 active:scale-95 transition-all">START SESSION</button>
         </div>
-        <div v-else class="p-8 text-gray-500 italic">Select a game from the horizontal list to view details.</div>
+        <div v-else class="p-8 text-gray-500 italic mt-10">Select a game from the horizontal list to play.</div>
       </div>
 
-      <!-- MAIN AREA -->
+      <!-- MAIN AREA (HORIZONTAL LIST) -->
       <div class="main-right">
-        <!-- 3. HORIZONTAL GAME LIST -->
         <div v-if="!isPlaying" class="flex-1 flex flex-col justify-center">
-          <div class="px-12 mb-4 flex justify-between items-center">
-             <h2 class="text-4xl font-black">POPULAR GAMES</h2>
-             <div class="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+          <div class="px-16 mb-8 flex justify-between items-end">
+             <div>
+               <h1 class="text-6xl font-black tracking-tighter">CLOUD GAMES</h1>
+               <p class="text-gray-500 mt-2 font-bold uppercase text-xs tracking-widest">Featured Titles for ADAN BYPASS</p>
+             </div>
+             <div class="bg-white/5 px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3">
+               <i data-lucide="search" class="w-4 h-4 text-gray-500"></i>
                <input v-model="searchQuery" placeholder="Search..." class="bg-transparent outline-none text-sm w-48">
              </div>
           </div>
           
           <div class="game-list-container no-scrollbar">
-            <div class="game-list-horizontal">
+            <div class="game-list-horizontal px-12">
+              <!-- Games will definitely show now! -->
               <div v-for="g in filteredGames" :key="g.id" class="game-card" @click="selectGame(g)">
                 <img :src="g.icon" onerror="this.src='https://cloudmoonapp.com/favicon.ico'">
-                <div class="p-4">
-                  <div class="font-bold text-white mb-1">{{g.title}}</div>
-                  <div class="text-[10px] text-purple-400 font-black uppercase">{{g.category}}</div>
+                <div class="p-6">
+                  <div class="font-black text-xl text-white mb-1 truncate">{{g.title}}</div>
+                  <div class="text-[10px] text-purple-400 font-black uppercase tracking-tighter">{{g.category}}</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- PLAYER AREA -->
+        <!-- Player Frame -->
         <div v-if="isPlaying" class="w-full h-full relative bg-black">
           <video ref="remoteVideo" :class="{rotate: true}" autoplay muted playsinline></video>
           <canvas ref="remoteCanvas" :class="{rotate: true}"></canvas>
-          <button @click="isPlaying = false" class="absolute top-4 right-4 z-[1] px-6 py-2 bg-red-500 rounded-xl font-bold">CLOSE</button>
+          <button @click="isPlaying = false" class="absolute top-6 right-6 z-50 px-8 py-3 bg-red-500/20 text-red-400 border border-red-500/30 rounded-2xl font-black backdrop-blur-md">EXIT STREAM</button>
         </div>
       </div>
     </div>
 
-    <!-- 4. STRICT LOGIN MODAL -->
-    <div v-if="showLoginModal" class="fixed inset-0 z- flex items-center justify-center bg-black/90 backdrop-blur-xl">
-      <div class="bg-[#0b0b0b] p-10 rounded-[40px] w-full max-w-sm border border-white/10 shadow-2xl">
-        <h2 class="text-3xl font-black mb-2">CloudMoon</h2>
-        <p class="text-gray-500 text-sm mb-8">Enter your official credentials.</p>
+    <!-- 3. STRICT PASSWORD LOGIN MODAL -->
+    <div v-if="showLoginModal" class="fixed inset-0 z-[3] flex items-center justify-center bg-black/95 backdrop-blur-2xl">
+      <div class="bg-[#0b0b0b] p-12 rounded-[50px] w-full max-w-md border border-white/10 shadow-3xl text-center">
+        <div class="w-20 h-20 bg-[#8b5cf6]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+           <i data-lucide="shield-check" class="text-[#8b5cf6] w-10 h-10"></i>
+        </div>
+        <h2 class="text-3xl font-black mb-2">CloudMoon Access</h2>
+        <p class="text-gray-500 text-sm mb-10">Official credentials required to bypass.</p>
         
-        <input type="email" v-model="loginEmail" placeholder="Email Address" class="w-full bg-[#1c1c1d] border border-white/10 rounded-2xl px-6 py-4 mb-4 outline-none focus:border-[#8b5cf6] transition">
-        <input type="password" v-model="loginPass" placeholder="Password" class="w-full bg-[#1c1c1d] border border-white/10 rounded-2xl px-6 py-4 mb-8 outline-none focus:border-[#8b5cf6] transition">
+        <input type="email" v-model="loginEmail" placeholder="Email Address" class="w-full bg-[#1c1c1d] border border-white/10 rounded-2xl px-6 py-5 mb-4 outline-none focus:border-[#8b5cf6] transition text-lg">
+        <input type="password" v-model="loginPass" placeholder="Password" class="w-full bg-[#1c1c1d] border border-white/10 rounded-2xl px-6 py-5 mb-10 outline-none focus:border-[#8b5cf6] transition text-lg">
         
         <div class="flex gap-4">
-          <button @click="showLoginModal = false" class="flex-1 py-4 bg-white/5 rounded-2xl font-bold">Cancel</button>
-          <button @click="handleStrictLogin" class="flex-1 py-4 bg-[#8b5cf6] rounded-2xl font-bold shadow-lg shadow-purple-500/20">Sign In</button>
+          <button @click="showLoginModal = false" class="flex-1 py-5 bg-white/5 rounded-3xl font-bold">Cancel</button>
+          <button @click="handleStrictLogin" class="flex-1 py-5 bg-[#8b5cf6] rounded-3xl font-black shadow-lg shadow-purple-500/20">Sign In</button>
         </div>
       </div>
     </div>
@@ -149,13 +154,14 @@
         loginPass: '',
         searchQuery: '',
         token: localStorage.getItem('userToken'),
-        // 5. ADDED GAMES LIST
+        // 4. THE MANUAL GAME LIST (ENSURES LOADING)
         rawGames: [
-          { id: 1, title: 'Genshin Impact', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_pQ_xXo6jXvW2g7Zz0L1_uP8lR9a1m7f0aQ&s', category: 'Action/RPG' },
-          { id: 2, title: 'Roblox', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6-mI6gG7K_ZJ9LpUq5-V5w2O7k0e1wzL-XQ&s', category: 'Adventure' },
-          { id: 3, title: 'Free Fire', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTz6-v0V9Zz_fQ4w7kL-G2xZ9w0o9e8v7p6aQ&s', category: 'Battle Royale' },
-          { id: 4, title: 'Minecraft', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_v4y6x8p7L_fQ2z0w9e8v7p6aQ&s', category: 'Simulation' },
-          { id: 5, title: 'Mobile Legends', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTz6-v0V9Zz_fQ4w7kL-G2xZ9w0o9e8v7p6aQ&s', category: 'MOBA' }
+          { id: 1, title: 'Genshin Impact', icon: 'https://cdn2.unrealengine.com/genshin-impact-3-4-1920x1080-608307044.jpg', category: 'Action/RPG' },
+          { id: 2, title: 'Roblox', icon: 'https://images.rbxcdn.com/f04c609590807b061d36d80d28b34015.jpg', category: 'Adventure' },
+          { id: 3, title: 'Free Fire', icon: 'https://dl.dir.freefiremobile.com/garena/ffmobile/ffsite/main/static/img/banner_1.e6e2b83.jpg', category: 'Battle Royale' },
+          { id: 4, title: 'Minecraft', icon: 'https://www.minecraft.net/content/dam/games/minecraft/key-art/Minecraft-Vanilla-KeyArt.jpg', category: 'Simulation' },
+          { id: 5, title: 'Mobile Legends', icon: 'https://mgl.moonton.com/itouch/item/img/20230608_168621454564817c11867c2.jpg', category: 'MOBA' },
+          { id: 6, title: 'Call of Duty', icon: 'https://www.callofduty.com/content/dam/atvi/callofduty/cod-touchpoints/mobile/home/m-hero.jpg', category: 'Shooter' }
         ]
       },
       computed: {
@@ -165,26 +171,25 @@
       },
       methods: {
         selectGame(g) { this.selectedGame = g; this.isSidebarOpen = true; },
-        // 6. STRICT LOGIN VALIDATION
+        // 5. STRICT LOGIN VALIDATION
         handleStrictLogin() {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(this.loginEmail)) {
-            return Swal.fire('Invalid Email', 'Please enter a valid email address (e.g. name@example.com)', 'error');
+            return Swal.fire('Error', 'Invalid Email Address', 'error');
           }
           if (this.loginPass.length < 6) {
-            return Swal.fire('Weak Password', 'Password must be at least 6 characters long', 'error');
+            return Swal.fire('Security', 'Password must be at least 6 characters', 'warning');
           }
           
-          // Successful validation
-          this.token = "session_" + Math.random();
+          this.token = "auth_" + btoa(this.loginEmail);
           localStorage.setItem('userToken', this.token);
           this.showLoginModal = false;
-          Swal.fire({ icon: 'success', title: 'Connected to CloudMoon', timer: 1500, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'ADAN BYPASS ACTIVE', text: 'Cloud session authorized', timer: 2000, showConfirmButton: false });
         },
         startGame() {
           if(!this.token) return this.showLoginModal = true;
           this.isPlaying = true;
-          Swal.fire({ title: 'Connecting...', text: 'Connecting to ADAN Cloud Node', timer: 2000, showConfirmButton: false });
+          Swal.fire({ title: 'Connecting...', text: 'Initializing Cloud Stream Node', timer: 2500, showConfirmButton: false });
         },
         signOut() {
           this.token = null;
@@ -192,7 +197,14 @@
           location.reload();
         }
       },
-      mounted() { lucide.createIcons(); }
+      mounted() { 
+        lucide.createIcons(); 
+        // Force scrollbar to be hidden but functional
+        document.querySelector('.game-list-container').addEventListener('wheel', (evt) => {
+          evt.preventDefault();
+          document.querySelector('.game-list-container').scrollLeft += evt.deltaY;
+        });
+      }
     });
   </script>
 </body>
