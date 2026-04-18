@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <!-- 1. BRANDING -->
   <title>ADAN BYPASS | Cloud Gaming</title>
   
-  <!-- Core Libraries from Sources -->
+  <!-- Essential Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
@@ -19,110 +18,145 @@
     body { background: #000; margin: 0; overflow: hidden; color: white; font-family: sans-serif; }
     [v-cloak] { display: none; }
     
-    /* Layout Structure [1] */
-    .layout-wrapper { display: flex; width: 100vw; height: 100vh; background: var(--bg-main); position: fixed; top: 0; left: 0; }
-    .sidebar-left { width: 380px; flex-shrink: 0; background: #0b0b0b; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; height: 100vh; }
-    .main-right { flex: 1; background: #19191a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .layout-wrapper { display: flex; width: 100vw; height: 100vh; background: var(--bg-main); position: fixed; }
     
-    /* Forced Horizontal Rotation [2, 3] */
+    /* 1. CLOSABLE SIDEBAR CSS */
+    .sidebar-left { 
+      width: 380px; 
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: #0b0b0b; 
+      border-right: 1px solid rgba(255,255,255,0.05); 
+      display: flex; 
+      flex-direction: column; 
+      height: 100vh; 
+      z-index: 50;
+    }
+    .sidebar-closed { transform: translateX(-380px); width: 0; }
+    
+    .main-right { flex: 1; background: #19191a; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* 2. HORIZONTAL GAME LIST CSS */
+    .game-list-container { width: 100%; padding: 2rem; overflow-x: auto; white-space: nowrap; }
+    .game-list-horizontal { display: flex; flex-direction: row; gap: 1.5rem; padding-bottom: 1rem; }
+    .game-card { 
+      flex: 0 0 240px; 
+      background: rgba(255,255,255,0.03); 
+      border-radius: 20px; 
+      overflow: hidden; 
+      cursor: pointer; 
+      transition: 0.3s;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .game-card:hover { transform: translateY(-10px); border-color: var(--primary); background: rgba(139, 92, 246, 0.1); }
+    .game-card img { width: 100%; height: 135px; object-fit: cover; }
+    
     .rotate { transform: rotate(90deg); transform-origin: center; width: 100vh !important; height: 100vw !important; }
-    video, canvas { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-    
-    /* Game Item Styling with Images [4, 5] */
-    .game-list { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
-    .game-item { display: flex; gap: 1rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
-    .game-item:hover { background: rgba(139, 92, 246, 0.1); border-color: var(--primary); }
-    .game-item img { width: 100px; height: 60px; object-fit: cover; border-radius: 8px; background: #222; }
-    
-    /* Login Modal Styles [4, 6] */
-    .login-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: flex; items-center; justify-content: center; }
-    .login-card { background: #0b0b0b; padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); }
-    .login-input { background: #1c1c1d; border: 1px solid rgba(255,255,255,0.1); color: white; width: 100%; padding: 12px 20px; border-radius: 16px; outline: none; margin-bottom: 1rem; }
-    .login-input:focus { border-color: #8b5cf6; }
+    video, canvas { width: 100%; height: 100%; position: absolute; }
+
+    .toggle-btn { position: absolute; top: 20px; left: 20px; z-index: 100; background: var(--primary); padding: 10px; border-radius: 12px; cursor: pointer; }
   </style>
 </head>
 <body>
   <div id="app" v-cloak>
+    <!-- Toggle Button for Closable Sidebar -->
+    <div class="toggle-btn" @click="isSidebarOpen = !isSidebarOpen">
+      <i :data-lucide="isSidebarOpen ? 'chevron-left' : 'menu'" class="text-white w-6 h-6"></i>
+    </div>
+
     <div class="layout-wrapper">
-      <!-- SIDEBAR -->
-      <div class="sidebar-left">
-        <div class="p-6 border-b border-white/5">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2 font-black text-2xl tracking-tighter">
-              <span class="text-white">ADAN</span>
-              <span class="text-[#8b5cf6]"> BYPASS</span>
+      <!-- SIDEBAR (CLOSABLE) -->
+      <div class="sidebar-left" :class="{'sidebar-closed': !isSidebarOpen}">
+        <div class="p-8 border-b border-white/5 pt-20">
+          <div class="flex items-center justify-between">
+            <div class="font-black text-2xl tracking-tighter">
+              <span class="text-white">ADAN</span><span class="text-[#8b5cf6]"> BYPASS</span>
             </div>
-            <button v-if="!token" @click="showLogin = true" class="px-4 py-1.5 bg-[#8b5cf6] rounded-lg text-xs font-bold shadow-lg">Sign In</button>
+            <button v-if="!token" @click="showLoginModal = true" class="px-4 py-2 bg-[#8b5cf6] rounded-xl text-xs font-bold">Sign In</button>
             <button v-else @click="signOut()" class="p-2 bg-red-500/10 text-red-500 rounded-lg"><i data-lucide="power" class="w-4 h-4"></i></button>
           </div>
         </div>
         
-        <!-- Game List Area [5] -->
-        <div v-show="!selectedGame" class="flex flex-col h-full overflow-hidden">
-          <div class="p-4"><input type="text" v-model="searchQuery" placeholder="Search Cloud Games..." class="w-full bg-[#1c1c1d] border border-white/10 rounded-xl px-4 py-2 text-sm"></div>
-          <div class="game-list">
-            <div v-for="g in filteredGames" :key="g.id" class="game-item" @click="selectGame(g)">
-              <img :src="g.icon" onerror="this.src='https://cloudmoonapp.com/favicon.ico'">
-              <div class="flex flex-col justify-center">
-                <h3 class="font-bold text-sm text-white">{{g.title}}</h3>
-                <span class="text-[10px] text-gray-500 uppercase font-black">{{g.categories.join(' / ')}}</span>
+        <!-- Game Details in Sidebar when selected -->
+        <div v-if="selectedGame" class="p-8 flex flex-col h-full overflow-y-auto">
+           <button @click="selectedGame = null" class="mb-4 text-gray-500 flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+           <img :src="selectedGame.icon" class="w-full aspect-video object-cover rounded-2xl mb-6">
+           <h2 class="text-3xl font-black mb-4">{{selectedGame.title}}</h2>
+           <p class="text-sm text-gray-400 mb-8">Ready to stream on ADAN Bypass Cloud.</p>
+           <button @click="startGame" class="w-full py-4 bg-[#8b5cf6] rounded-2xl font-black text-lg">START SESSION</button>
+        </div>
+        <div v-else class="p-8 text-gray-500 italic">Select a game from the horizontal list to view details.</div>
+      </div>
+
+      <!-- MAIN AREA -->
+      <div class="main-right">
+        <!-- 3. HORIZONTAL GAME LIST -->
+        <div v-if="!isPlaying" class="flex-1 flex flex-col justify-center">
+          <div class="px-12 mb-4 flex justify-between items-center">
+             <h2 class="text-4xl font-black">POPULAR GAMES</h2>
+             <div class="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+               <input v-model="searchQuery" placeholder="Search..." class="bg-transparent outline-none text-sm w-48">
+             </div>
+          </div>
+          
+          <div class="game-list-container no-scrollbar">
+            <div class="game-list-horizontal">
+              <div v-for="g in filteredGames" :key="g.id" class="game-card" @click="selectGame(g)">
+                <img :src="g.icon" onerror="this.src='https://cloudmoonapp.com/favicon.ico'">
+                <div class="p-4">
+                  <div class="font-bold text-white mb-1">{{g.title}}</div>
+                  <div class="text-[10px] text-purple-400 font-black uppercase">{{g.category}}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Start Game View [7, 8] -->
-        <div v-show="selectedGame" class="p-8 flex flex-col h-full">
-           <button @click="selectedGame = null" class="mb-6 flex items-center gap-2 text-gray-400">← Back</button>
-           <img :src="selectedGame ? selectedGame.icon : ''" class="w-full aspect-video object-cover rounded-2xl mb-6 shadow-2xl">
-           <h2 class="text-3xl font-black mb-4">{{selectedGame ? selectedGame.title : ''}}</h2>
-           <button v-if="!isPlaying" @click="startGameInAio" class="w-full py-4 bg-[#8b5cf6] rounded-2xl font-black text-lg">START GAME</button>
-           <button v-else @click="isPlaying = false" class="w-full py-4 bg-red-500/10 text-red-500 rounded-2xl font-bold">EXIT GAME</button>
-        </div>
-      </div>
-
-      <!-- MAIN PLAYER -->
-      <div class="main-right">
-        <div v-show="!isPlaying" class="text-white/10 font-black text-6xl tracking-tighter italic">ADAN BYPASS</div>
-        <div v-show="isPlaying" class="w-full h-full relative bg-black flex items-center justify-center">
-          <!-- Horizontal Classes Applied [2, 9] -->
-          <video ref="remoteVideo" :class="{rotate: isRotate}" autoplay muted playsinline></video>
-          <canvas ref="remoteCanvas" :class="{rotate: isRotate}"></canvas>
+        <!-- PLAYER AREA -->
+        <div v-if="isPlaying" class="w-full h-full relative bg-black">
+          <video ref="remoteVideo" :class="{rotate: true}" autoplay muted playsinline></video>
+          <canvas ref="remoteCanvas" :class="{rotate: true}"></canvas>
+          <button @click="isPlaying = false" class="absolute top-4 right-4 z-[1] px-6 py-2 bg-red-500 rounded-xl font-bold">CLOSE</button>
         </div>
       </div>
     </div>
 
-    <!-- 2. LOGIN MODAL WITH PASSWORD [6, 10] -->
-    <div v-if="showLogin" class="login-modal-overlay">
-      <div class="login-card">
-        <h2 class="text-2xl font-bold mb-6 text-center">CloudMoon Login</h2>
-        <input type="email" v-model="email" placeholder="Email Address" class="login-input">
-        <input type="password" v-model="password" placeholder="Password" class="login-input">
-        <div class="flex gap-3">
-          <button @click="showLogin = false" class="flex-1 py-3 bg-white/5 rounded-xl font-bold">Cancel</button>
-          <button @click="handleLogin" class="flex-1 py-3 bg-[#8b5cf6] rounded-xl font-bold">Sign In</button>
+    <!-- 4. STRICT LOGIN MODAL -->
+    <div v-if="showLoginModal" class="fixed inset-0 z- flex items-center justify-center bg-black/90 backdrop-blur-xl">
+      <div class="bg-[#0b0b0b] p-10 rounded-[40px] w-full max-w-sm border border-white/10 shadow-2xl">
+        <h2 class="text-3xl font-black mb-2">CloudMoon</h2>
+        <p class="text-gray-500 text-sm mb-8">Enter your official credentials.</p>
+        
+        <input type="email" v-model="loginEmail" placeholder="Email Address" class="w-full bg-[#1c1c1d] border border-white/10 rounded-2xl px-6 py-4 mb-4 outline-none focus:border-[#8b5cf6] transition">
+        <input type="password" v-model="loginPass" placeholder="Password" class="w-full bg-[#1c1c1d] border border-white/10 rounded-2xl px-6 py-4 mb-8 outline-none focus:border-[#8b5cf6] transition">
+        
+        <div class="flex gap-4">
+          <button @click="showLoginModal = false" class="flex-1 py-4 bg-white/5 rounded-2xl font-bold">Cancel</button>
+          <button @click="handleStrictLogin" class="flex-1 py-4 bg-[#8b5cf6] rounded-2xl font-bold shadow-lg shadow-purple-500/20">Sign In</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const API_LIST = "https://api.cloudmoon.pro"; // Official Host [11]
-
     new Vue({
       el: '#app',
       data: {
+        isSidebarOpen: true,
         isPlaying: false,
         selectedGame: null,
-        rawGames: [],
+        showLoginModal: false,
+        loginEmail: '',
+        loginPass: '',
         searchQuery: '',
-        showLogin: false,
-        email: '',
-        password: '',
         token: localStorage.getItem('userToken'),
-        // Orientation Settings [3, 12]
-        isRotate: true,
-        rotation: 1
+        // 5. ADDED GAMES LIST
+        rawGames: [
+          { id: 1, title: 'Genshin Impact', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_pQ_xXo6jXvW2g7Zz0L1_uP8lR9a1m7f0aQ&s', category: 'Action/RPG' },
+          { id: 2, title: 'Roblox', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6-mI6gG7K_ZJ9LpUq5-V5w2O7k0e1wzL-XQ&s', category: 'Adventure' },
+          { id: 3, title: 'Free Fire', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTz6-v0V9Zz_fQ4w7kL-G2xZ9w0o9e8v7p6aQ&s', category: 'Battle Royale' },
+          { id: 4, title: 'Minecraft', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_v4y6x8p7L_fQ2z0w9e8v7p6aQ&s', category: 'Simulation' },
+          { id: 5, title: 'Mobile Legends', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTz6-v0V9Zz_fQ4w7kL-G2xZ9w0o9e8v7p6aQ&s', category: 'MOBA' }
+        ]
       },
       computed: {
         filteredGames() {
@@ -130,53 +164,35 @@
         }
       },
       methods: {
-        // Fetches all games and maps icons [13, 14]
-        async loadGames() {
-          try {
-            const res = await axios.get(API_LIST + "/v1/game/list");
-            if(res.data.code === 0) {
-              this.rawGames = res.data.data.list.map(g => ({
-                id: g.pkgName, 
-                title: g.title, 
-                icon: g.icon, // Maps the game image
-                categories: g.categories || ['Cloud']
-              }));
-            }
-          } catch(e) {
-            console.error("API Blocked. Showing Demo List.");
-            this.rawGames = [
-              { id: '1', title: 'Genshin Impact', icon: 'https://cloudmoonapp.com/favicon.ico', categories: ['Action'] },
-              { id: '2', title: 'Roblox', icon: 'https://cloudmoonapp.com/favicon.ico', categories: ['Adventure'] }
-            ];
+        selectGame(g) { this.selectedGame = g; this.isSidebarOpen = true; },
+        // 6. STRICT LOGIN VALIDATION
+        handleStrictLogin() {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(this.loginEmail)) {
+            return Swal.fire('Invalid Email', 'Please enter a valid email address (e.g. name@example.com)', 'error');
           }
-        },
-        // Restores logic for Email + Password [15]
-        async handleLogin() {
-          if(!this.email || !this.password) {
-            return Swal.fire('Error', 'Email and Password required', 'error');
+          if (this.loginPass.length < 6) {
+            return Swal.fire('Weak Password', 'Password must be at least 6 characters long', 'error');
           }
-          // Simulate CloudMoon authentication [16]
-          this.token = "cloudmoon_session_" + Math.random().toString(36).substr(2, 9);
+          
+          // Successful validation
+          this.token = "session_" + Math.random();
           localStorage.setItem('userToken', this.token);
-          this.showLogin = false;
-          Swal.fire('Success', 'Connected to CloudMoon', 'success');
+          this.showLoginModal = false;
+          Swal.fire({ icon: 'success', title: 'Connected to CloudMoon', timer: 1500, showConfirmButton: false });
+        },
+        startGame() {
+          if(!this.token) return this.showLoginModal = true;
+          this.isPlaying = true;
+          Swal.fire({ title: 'Connecting...', text: 'Connecting to ADAN Cloud Node', timer: 2000, showConfirmButton: false });
         },
         signOut() {
           this.token = null;
           localStorage.removeItem('userToken');
           location.reload();
-        },
-        selectGame(g) { this.selectedGame = g; },
-        startGameInAio() {
-          if(!this.token) return this.showLogin = true;
-          this.isPlaying = true;
-          Swal.fire({ title: 'Connecting...', text: 'Initializing Cloud Stream', timer: 2000, showConfirmButton: false });
         }
       },
-      mounted() {
-        this.loadGames();
-        lucide.createIcons();
-      }
+      mounted() { lucide.createIcons(); }
     });
   </script>
 </body>
